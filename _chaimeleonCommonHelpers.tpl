@@ -155,6 +155,16 @@ harbor.chaimeleon-eu.i3m.upv.es/chaimeleon-library
 harbor.chaimeleon-eu.i3m.upv.es/dockerhub
 {{- end -}}
 
+{{/* Obtain the Chaimeleon guacamole service url. */}}
+{{- define "chaimeleon.guacamole-url" -}}
+https://chaimeleon-eu.i3m.upv.es/guacamole/
+{{- end -}}
+
+{{/* Obtain the Chaimeleon guacamole backend service host. */}}
+{{- define "chaimeleon.guacd-host" -}}
+oidc-guacamole-guacd.oidc-guacamole.svc.cluster.local
+{{- end -}}
+
 
 {{/* Generate ingress annotations to secure a web application (only authenticated user will be able to access). */}}
 {{- define "chaimeleon.ingress-auth-annotations" -}}

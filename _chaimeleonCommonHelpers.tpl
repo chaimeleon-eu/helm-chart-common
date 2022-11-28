@@ -22,9 +22,12 @@ Obtain Chaimeleon common variables.
 {{- index $configmap "data" "ceph.gid"  | int | default 1000 -}}
 {{- end }}
 
-{{- define "chaimeleon.ceph.monitor" -}}
+{{- define "chaimeleon.ceph.monitors" -}}
 {{- $configmap := (lookup "v1" "ConfigMap" .Release.Namespace .Values.configmaps.chaimeleon) }}
-{{- index $configmap "data" "ceph.monitor" -}}
+{{- $monitors := index $configmap "data" "ceph.monitors" -}}
+{{- range $monitor := splitList "," $monitors }}
+- "{{ $monitor }}"
+{{- end }}
 {{- end }}
 
 {{- define "chaimeleon.datalake.path" -}}
@@ -41,8 +44,8 @@ Obtain Chaimeleon common variables.
 cephfs:
   path: "{{ include "chaimeleon.datalake.path" . }}" 
   user: "{{ include "chaimeleon.ceph.user" . }}" 
-  monitors:
-      - "{{ include "chaimeleon.ceph.monitor" . }}"  
+  monitors: 
+      {{ include "chaimeleon.ceph.monitors" . | nindent 6 }}
   secretRef:
       name: "ceph-auth"
   readOnly: true
@@ -62,8 +65,8 @@ cephfs:
 cephfs:
   path: "{{ include "chaimeleon.persistent_home.path" . }}" 
   user: "{{ include "chaimeleon.ceph.user" . }}" 
-  monitors:
-      - "{{ include "chaimeleon.ceph.monitor" . }}"  
+  monitors: 
+      {{ include "chaimeleon.ceph.monitors" . | nindent 6 }}
   secretRef:
       name: "ceph-auth"
 {{- end }}
@@ -80,10 +83,10 @@ cephfs:
 {{/* Generate the contents of a volume object which provides access to the persistent shared folder. */}}
 {{- define "chaimeleon.persistent_shared_folder.volume" -}}
 cephfs:
-  path: "{{ include "chaimeleon.persistent_shared_folder.path" . }}" 
-  user: "{{ include "chaimeleon.ceph.user" . }}" 
-  monitors:
-      - "{{ include "chaimeleon.ceph.monitor" . }}"  
+  path: "{{ include "chaimeleon.persistent_shared_folder.path" . }}"
+  user: "{{ include "chaimeleon.ceph.user" . }}"
+  monitors: 
+      {{ include "chaimeleon.ceph.monitors" . | nindent 6 }}
   secretRef:
       name: "ceph-auth"
 {{- end }}
@@ -105,8 +108,8 @@ cephfs:
 cephfs:
   path: "{{ include "chaimeleon.datasets.path" $top }}/{{ $datasetID }}" 
   user: "{{ include "chaimeleon.ceph.user" $top }}" 
-  monitors:
-      - "{{ include "chaimeleon.ceph.monitor" $top }}"  
+  monitors: 
+      {{ include "chaimeleon.ceph.monitors" $top | nindent 6 }}
   secretRef:
       name: "ceph-auth"
   readOnly: true
@@ -162,7 +165,7 @@ https://chaimeleon-eu.i3m.upv.es/guacamole/
 
 {{/* Obtain the Chaimeleon guacamole backend service host. */}}
 {{- define "chaimeleon.guacd-host" -}}
-oidc-guacamole-guacd.oidc-guacamole.svc.cluster.local
+guacamole-guacd.guacamole.svc.cluster.local
 {{- end -}}
 
 

@@ -122,8 +122,7 @@ cephfs:
 {{- end }}
 
 {{- define "chaimeleon.user.uid" -}}
-{{- $configmap := (lookup "v1" "ConfigMap" .Release.Namespace .Values.configmaps.chaimeleon) }}
-{{- index $configmap "data" "user.uid" | int -}}
+1000
 {{- end }}
 
 {{- define "chaimeleon.group.name" -}}
@@ -132,8 +131,7 @@ cephfs:
 {{- end }}
 
 {{- define "chaimeleon.group.gid" -}}
-{{- $configmap := (lookup "v1" "ConfigMap" .Release.Namespace .Values.configmaps.chaimeleon) }}
-{{- index $configmap "data" "group.gid" | int -}}
+1000
 {{- end }}
 
 

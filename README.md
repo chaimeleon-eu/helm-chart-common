@@ -2,6 +2,9 @@
 ## How to design a workstation Helm chart for the CHAIMELEON platform
 
 This is a guide to create a Helm chart for deploying a workstation in the CHAIMELEON platform. 
+We recommend to take one of our charts as an example:
+ - [helm-chart-desktop-tensorflow](https://github.com/chaimeleon-eu/helm-chart-desktop-tensorflow) or [helm-chart-desktop-pytorch] (https://github.com/chaimeleon-eu/helm-chart-desktop-pytorch): for a chart of desktop type.
+ - [helm-chart-jupyter-tensorflow](https://github.com/chaimeleon-eu/helm-chart-jupyter-tensorflow) or [helm-chart-jupyter-pytorch](https://github.com/chaimeleon-eu/helm-chart-jupyter-pytorch): for a chart of web application type.
 
 ### Images
 
@@ -20,21 +23,21 @@ or
 `git clone https://github.com/chaimeleon-eu/helm-chart-common.git`  
 NOTE: if you use this second method it is recommended to add `templates/ChaimeleonCommon/.git` in your `.helmignore` file.
 
-It can be just in the "templates" directory, beside your `_helpers.tpl` (if you have one) or in a subdirectory.
+It can be just in the "templates" directory, beside your `_helpers.tpl` (if you have one) or in a subdirectory.  
 All the functions defined in it have the prefix `chaimeleon.`, and they can be used with `include`. You will see it in the next chapters of this guide.
 
 ### CHAIMELEON user 
 
-The main process of any container must be run by the user with uid 1000, gid 1000 and the supplemental groups defined in the "chaimeleon" configmap which is in the user's namespace.
+The main process of any container must be run by the user with *uid* 1000, *gid* 1000 and the *supplemental groups* defined in the "chaimeleon" configmap which is in the user's namespace.  
 The reason for this is that some volumes will be mounted in the container that have files permissions configured for these user ids. 
 Also this volumes can be mounted in many different workstations and the user IDs must be the same in all of them to guaranty the user have the same rights on the same files. 
 And of course the user can not be root because she/he only should be able to access her/his files and datasets.
 
-The uid and gid are shared by all the users, they corresponds to an OS generic user (that we usually call "chaimeleon"), so the image designer can create that user and use it for setting the permissions on the container "native" files. 
-The supplemental group is different for every user and the CHAIMELEON platform use it for setting the permissions on the volumes files (datalake, datasets, persistent-shared-home). Specifically, the supplemental group of a user is included in the ACL (Access Control List) of files and directories that the user must have access to.
+The *uid* and *gid* are shared by all the users, they corresponds to an OS generic user (that we usually call "chaimeleon"), so the image designer can create that user and use it for setting the permissions on the container "native" files.  
+The *supplemental group* is different for every user and the CHAIMELEON platform use it for setting the permissions on the volumes files (datalake, datasets, persistent-shared-home). Specifically, the supplemental group of a user is included in the ACL (Access Control List) of files and directories that the user must have access to.
 
 As a result, any deployment, statefulset or pod created by the chart must include the section `securityContext` with this content:
-```
+```yaml
       securityContext:
         runAsUser: 1000
         runAsGroup: 1000
@@ -46,7 +49,7 @@ As a result, any deployment, statefulset or pod created by the chart must includ
 
 There should be a template in the chart for creating a k8s deployment object. 
 The deployment should have this annotations:
-```
+```yaml
   annotations: 
     chaimeleon.eu/datasetsIDs: "{{ .Values.datasets_list }}"
     chaimeleon.eu/toolName: "{{ .Chart.Name }}"
@@ -54,7 +57,7 @@ The deployment should have this annotations:
 ```
 
 This can be accomplished just calling the function defined in _chaimeleonCommonHelpers.tpl:
-```
+```yaml
   annotations: 
     {{- include "chaimeleon.annotations" . | nindent 4 }}
 ```
@@ -66,7 +69,7 @@ This data will be readed by the k8s operator before creating the deployment to:
 ### Volumes declaration in the deployment
 
 In `spec.template.spec.volumes` you can call again some functions defined in _chaimeleonCommonHelpers.tpl in order to write the volume declaration for the datalake, the home of the user, the shared folder and each dataset selected by the user:
-```
+```yaml
       volumes:
         - name: datalake
           {{- include "chaimeleon.datalake.volume" . | nindent 10 }}
@@ -89,7 +92,7 @@ In order to write that volume declarations a configmap and a secret in the user 
 In `spec.template.spec.containers[i].volumeMounts` you define the path were the volumes are mounted. 
 We recommend to use the functions of _chaimeleonCommonHelpers.tpl that writes the common paths to have an homogeneous environment whatever the type of workstation the user select for his/her work session.
 Also the container image usually have this directories already created.
-```
+```yaml
         volumeMounts:
           - mountPath: "{{- include "chaimeleon.datalake.mount_point" . -}}"
             name: datalake
@@ -109,18 +112,18 @@ Also the container image usually have this directories already created.
 ### The priorityClass and request of resources 
 
 You can specify the priority class with:  
-`spec.template.spec.priorityClassName: processing-applications`
-This is the default and currently the unique for that type of deployments.
+`spec.template.spec.priorityClassName: processing-applications`.  
+This is the default and currently the unique priority class defined for that type of deployments.
 
 And finally you can specify the resources you expect to use for each container in `spec.template.spec.containers[i].resources`:
-```
+```yaml
         resources:
           requests:
             memory: "4Gi"
             cpu: "1"
 ```
-Or let the user set them with:
-```
+Or let the user set them with (see the chapter [How to define values set by the user as a form](#how-to-define-values-set-by-the-user-as-a-form)):
+```yaml
         resources:
           requests:
             memory: "{{ .Values.requests.memory }}"
@@ -137,8 +140,54 @@ The priority class and resources request affect the quality of service, go [here
 
 
 ### Anotations for the creation of Guacamole connection
+
 ...
 
+### How to define values set by the user as a form
+
+The current interface for launch applications in CHAIMELEON platform (Kubeapps) takes the file `values.schema.json` of the chart to create a user friendly form for the user to set the values configure the deployment.
+
+We recommend to include at least the fields of "minimum requests" (gpu, cpu and memory) and the "dataset list". 
+This is an example of the file `values.schema.json`:
+```json
+{
+  "$schema": "http://json-schema.org/schema#",
+  "type": "object",
+  "properties": {
+    "requests": {
+      "type": "object",
+      "form": true,
+      "title": "Minimum requests",
+      "properties": {
+        "gpu": {
+          "type": "boolean",
+          "title": "Request GPU",
+          "description": "Mark only if you want to use a GPU.",
+          "form": true
+        },
+        "cpu": {
+          "type": "string",
+          "title": "CPUs",
+          "description": "How many CPUs do you need? (Examples: 0.5, 1, 2, ...)",
+          "form": true
+        },
+        "memory": {
+          "type": "string",
+          "title": "Memory",
+          "description": "How much memory do you need? (Examples: 200Mi, 1Gi, 4Gi, ...)",
+          "form": true
+        }
+      }
+    },
+    "datasets_list": {
+      "type": "string",
+      "title": "Dataset list",
+      "description": "A comma separated list of the datasets that will be available at the container. (It can be empty)",
+      "form": true
+    }
+  }
+}
+```
 
 
 ## Build a Helm chart

@@ -3,8 +3,8 @@
 
 This is a guide to create a Helm chart for deploying a workstation in the CHAIMELEON platform. 
 We recommend to take one of our charts as an example:
- - [helm-chart-desktop-tensorflow](https://github.com/chaimeleon-eu/helm-chart-desktop-tensorflow) or [helm-chart-desktop-pytorch] (https://github.com/chaimeleon-eu/helm-chart-desktop-pytorch): for a chart of desktop type.
- - [helm-chart-jupyter-tensorflow](https://github.com/chaimeleon-eu/helm-chart-jupyter-tensorflow) or [helm-chart-jupyter-pytorch](https://github.com/chaimeleon-eu/helm-chart-jupyter-pytorch): for a chart of web application type.
+ - [helm-chart-desktop-tensorflow](https://github.com/chaimeleon-eu/helm-chart-desktop-tensorflow): if you want to create a chart of type desktop.
+ - [helm-chart-jupyter-tensorflow](https://github.com/chaimeleon-eu/helm-chart-jupyter-tensorflow): if you want to create a chart of type web application.
 
 ### Images
 
@@ -28,13 +28,13 @@ All the functions defined in it have the prefix `chaimeleon.`, and they can be u
 
 ### CHAIMELEON user 
 
-The main process of any container must be run by the user with *uid* 1000, *gid* 1000 and the *supplemental groups* defined in the "chaimeleon" configmap which is in the user's namespace.  
+The main process of any container must be run by the user with **uid** 1000, **gid** 1000 and the **supplemental groups** defined in the "chaimeleon" configmap which is in the user's namespace.  
 The reason for this is that some volumes will be mounted in the container that have files permissions configured for these user ids. 
 Also this volumes can be mounted in many different workstations and the user IDs must be the same in all of them to guaranty the user have the same rights on the same files. 
 And of course the user can not be root because she/he only should be able to access her/his files and datasets.
 
-The *uid* and *gid* are shared by all the users, they corresponds to an OS generic user (that we usually call "chaimeleon"), so the image designer can create that user and use it for setting the permissions on the container "native" files.  
-The *supplemental group* is different for every user and the CHAIMELEON platform use it for setting the permissions on the volumes files (datalake, datasets, persistent-shared-home). Specifically, the supplemental group of a user is included in the ACL (Access Control List) of files and directories that the user must have access to.
+The **uid** and **gid** are shared by all the users, they corresponds to an OS generic user (that we usually call "chaimeleon"), so the image designer can create that user and use it for setting the permissions on the container "native" files.  
+The **supplemental group** is different for every user and the CHAIMELEON platform use it for setting the permissions on the volumes files (datalake, datasets, persistent-shared-home). Specifically, the supplemental group of a user is included in the ACL (Access Control List) of files and directories that the user must have access to.
 
 As a result, any deployment, statefulset or pod created by the chart must include the section `securityContext` with this content:
 ```yaml

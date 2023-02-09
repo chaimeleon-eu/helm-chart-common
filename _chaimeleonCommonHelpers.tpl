@@ -140,11 +140,11 @@ cephfs:
 chaimeleon-eu.i3m.upv.es
 {{- end -}}
 
-{{/* Obtain the path part of the URL of a web application to be deployed in Chaimeleon platform. */}}
+{{/* Obtain the path part of the URL of a web application to be deployed in Chaimeleon platform. 
 {{- define "chaimeleon.user-path" -}}
-{{- /* printf "workspace/%s/" .Release.Namespace */ -}}
 {{- printf "%s/" .Release.Namespace -}}
 {{- end -}}
+*/}}
 
 {{/* Obtain the Chaimeleon image library url. */}}
 {{- define "chaimeleon.library-url" -}}
@@ -166,10 +166,28 @@ https://chaimeleon-eu.i3m.upv.es/guacamole/
 guacamole-guacd.guacamole.svc.cluster.local
 {{- end -}}
 
+{{/* Generate the value for the guacamole user. */}}
+{{- define "chaimeleon.guacamole-user-value" -}}
+valueFrom:
+  secretKeyRef:
+    name: "guacamole-api-auth"
+    key: user
+{{- end -}}
 
-{{/* Generate ingress annotations to secure a web application (only authenticated user will be able to access). */}}
+{{/* Generate the value for the guacamole password. */}}
+{{- define "chaimeleon.guacamole-password-value" -}}
+valueFrom:
+  secretKeyRef:
+    name: "guacamole-api-auth"
+    key: password
+{{- end -}}
+
+
+{{/* Generate ingress annotations to secure a web application (only authenticated user will be able to access). 
 {{- define "chaimeleon.ingress-auth-annotations" -}}
 nginx.ingress.kubernetes.io/auth-url: "https://chaimeleon-eu.i3m.upv.es/oauth2p/auth"
 nginx.ingress.kubernetes.io/auth-signin: "https://chaimeleon-eu.i3m.upv.es/oauth2p/start"
 nginx.ingress.kubernetes.io/proxy-buffer-size: '16k'
 {{- end }}
+*/}}
+

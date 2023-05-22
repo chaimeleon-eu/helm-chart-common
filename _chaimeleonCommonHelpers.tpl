@@ -7,6 +7,7 @@ chaimeleon.eu/datasetsIDs: "{{ .Values.datasets_list }}"
 {{- end }}
 chaimeleon.eu/toolName: "{{ .Chart.Name }}"
 chaimeleon.eu/toolVersion: "{{ .Chart.Version }}"
+chaimeleon.eu/createGuacamoleConnection: "true"
 {{- end }}
 
 {{/*

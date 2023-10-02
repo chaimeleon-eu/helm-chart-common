@@ -1,12 +1,17 @@
 {{/* vim: set filetype=mustache: */}}
 
-{{/* Generate deployment annotations related to dataset access. */}}
-{{- define "chaimeleon.annotations" -}}
+{{/* Generate deployment annotations related to dataset access for a deployment without graphical desktop. */}}
+{{- define "chaimeleon.annotations_no_desktop" -}}
 {{- if .Values.datasets_list }}
 chaimeleon.eu/datasetsIDs: "{{ .Values.datasets_list }}"
 {{- end }}
 chaimeleon.eu/toolName: "{{ .Chart.Name }}"
 chaimeleon.eu/toolVersion: "{{ .Chart.Version }}"
+{{- end }}
+
+{{/* Generate deployment annotations related to dataset access. */}}
+{{- define "chaimeleon.annotations" -}}
+{{ include "chaimeleon.annotations_no_desktop" . }}
 chaimeleon.eu/createGuacamoleConnection: "true"
 {{- end }}
 

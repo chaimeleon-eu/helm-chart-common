@@ -147,38 +147,13 @@ The priority class and resources request affect the quality of service, go [here
 
 The current interface for launch applications in CHAIMELEON platform (Kubeapps) takes the file `values.schema.json` of the chart to create a user friendly form for the user to set the values configure the deployment.
 
-We recommend to include at least the fields of "minimum requests" (gpu, cpu and memory) and the "dataset list". 
+We recommend to create this file including at least the field for the "dataset list". 
 This is an example of the file `values.schema.json`:
 ```json
 {
   "$schema": "http://json-schema.org/schema#",
   "type": "object",
   "properties": {
-    "requests": {
-      "type": "object",
-      "form": true,
-      "title": "Minimum requests",
-      "properties": {
-        "gpu": {
-          "type": "boolean",
-          "title": "Request GPU",
-          "description": "Mark only if you want to use a GPU.",
-          "form": true
-        },
-        "cpu": {
-          "type": "string",
-          "title": "CPUs",
-          "description": "How many CPUs do you need? (Examples: 0.5, 1, 2, ...)",
-          "form": true
-        },
-        "memory": {
-          "type": "string",
-          "title": "Memory",
-          "description": "How much memory do you need? (Examples: 200Mi, 1Gi, 4Gi, ...)",
-          "form": true
-        }
-      }
-    },
     "datasets_list": {
       "type": "string",
       "title": "Dataset list",

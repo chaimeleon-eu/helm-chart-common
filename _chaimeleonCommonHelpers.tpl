@@ -25,11 +25,11 @@ chaimeleon.eu/createGuacamoleConnection: "true"
 {{/* Generate annotations for a deployment with graphical desktop and access to datasets. */}}
 {{- define "chaimeleon.annotations" -}}
 {{ include "chaimeleon.annotations.tool_info" . }}
-{{- /* Enable the mounting of datasets:*/ -}}
+{{/* Enable the mounting of datasets: */}}
 {{ include "chaimeleon.annotations.mount_datasets" . }}
-{{- /* Enable the mounting of persistent-home and persistent-shared-folder:*/ -}}
+{{/* Enable the mounting of persistent-home and persistent-shared-folder: */}}
 {{ include "chaimeleon.annotations.mount_persistent_home_and_shared" . }}
-{{- /* Enable the creation of a connection in Guacamole in order to access to the remote desktop: */ -}}
+{{/* Enable the creation of a connection in Guacamole in order to access to the remote desktop: */}}
 {{ include "chaimeleon.annotations.desktop_connection" . }}
 {{- end }}
 

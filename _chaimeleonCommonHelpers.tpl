@@ -1,124 +1,53 @@
 {{/* vim: set filetype=mustache: */}}
 
-{{/* Generate deployment annotations related to dataset access for a deployment without graphical desktop. */}}
-{{- define "chaimeleon.annotations_no_desktop" -}}
-{{- if .Values.datasets_list }}
-chaimeleon.eu/datasetsIDs: "{{ .Values.datasets_list }}"
-{{- end }}
+{{- define "chaimeleon.annotations.tool_info" -}}
 chaimeleon.eu/toolName: "{{ .Chart.Name }}"
 chaimeleon.eu/toolVersion: "{{ .Chart.Version }}"
 {{- end }}
 
-{{/* Generate deployment annotations related to dataset access. */}}
-{{- define "chaimeleon.annotations" -}}
-{{ include "chaimeleon.annotations_no_desktop" . }}
+{{- define "chaimeleon.annotations.mount_datasets" -}}
+{{- if .Values.datasets_list }}
+chaimeleon.eu/datasetsIDs: "{{ .Values.datasets_list }}"
+chaimeleon.eu/datasetsMountPoint: "{{ include "chaimeleon.datasets.mount_point" . }}"
+{{- end }}
+{{- end }}
+
+{{- define "chaimeleon.annotations.mount_persistent_home_and_shared" -}}
+chaimeleon.eu/persistentHomeMountPoint: "{{ include "chaimeleon.persistent_home.mount_point" . }}"
+chaimeleon.eu/persistentSharedFolderMountPoint: "{{ include "chaimeleon.persistent_shared_folder.mount_point" . }}"
+{{- end }}
+
+{{- define "chaimeleon.annotations.desktop_connection" -}}
 chaimeleon.eu/createGuacamoleConnection: "true"
 {{- end }}
 
-{{/*
-Obtain Chaimeleon common variables.
-*/}}
-{{- define "chaimeleon.ceph.user" -}}
-{{- $configmap := (lookup "v1" "ConfigMap" .Release.Namespace .Values.configmaps.chaimeleon) }}
-{{- index $configmap "data" "ceph.user" | default (printf "%s-%s" "chaimeleon-user" .Release.Namespace) -}}
+
+{{/* Generate annotations for a deployment with graphical desktop and access to datasets. */}}
+{{- define "chaimeleon.annotations" -}}
+{{ include "chaimeleon.annotations.tool_info" . }}
+{{- /* Enable the mounting of datasets:*/ -}}
+{{ include "chaimeleon.annotations.mount_datasets" . }}
+{{- /* Enable the mounting of persistent-home and persistent-shared-folder:*/ -}}
+{{ include "chaimeleon.annotations.mount_persistent_home_and_shared" . }}
+{{- /* Enable the creation of a connection in Guacamole in order to access to the remote desktop: */ -}}
+{{ include "chaimeleon.annotations.desktop_connection" . }}
 {{- end }}
 
-{{- define "chaimeleon.ceph.gid" -}}
-{{- $configmap := (lookup "v1" "ConfigMap" .Release.Namespace .Values.configmaps.chaimeleon) }}
-{{- index $configmap "data" "ceph.gid"  | int | default 1000 -}}
-{{- end }}
-
-{{- define "chaimeleon.ceph.monitors" -}}
-{{- $configmap := (lookup "v1" "ConfigMap" .Release.Namespace .Values.configmaps.chaimeleon) }}
-{{- $monitors := index $configmap "data" "ceph.monitors" -}}
-{{- range $monitor := splitList "," $monitors }}
-- "{{ $monitor }}"
-{{- end }}
-{{- end }}
-
-{{- define "chaimeleon.datalake.path" -}}
-{{- $configmap := (lookup "v1" "ConfigMap" .Release.Namespace .Values.configmaps.chaimeleon) }}
-{{- index $configmap "data" "datalake.path" -}}
-{{- end }}
 
 {{- define "chaimeleon.datalake.mount_point" -}}
 /mnt/datalake
-{{- end }}
-
-{{/* Generate the contents of a volume object which provides access to the datalake folder. */}}
-{{- define "chaimeleon.datalake.volume" -}}
-cephfs:
-  path: "{{ include "chaimeleon.datalake.path" . }}" 
-  user: "{{ include "chaimeleon.ceph.user" . }}" 
-  monitors: 
-      {{ include "chaimeleon.ceph.monitors" . | nindent 6 }}
-  secretRef:
-      name: "ceph-auth"
-  readOnly: true
-{{- end }}
-
-{{- define "chaimeleon.persistent_home.path" -}}
-{{- $configmap := (lookup "v1" "ConfigMap" .Release.Namespace .Values.configmaps.chaimeleon) }}
-{{- index $configmap "data" "persistent_home.path" -}}
 {{- end }}
 
 {{- define "chaimeleon.persistent_home.mount_point" -}}
 /home/chaimeleon/persistent-home
 {{- end }}
 
-{{/* Generate the contents of a volume object which provides access to the persistent home folder. */}}
-{{- define "chaimeleon.persistent_home.volume" -}}
-cephfs:
-  path: "{{ include "chaimeleon.persistent_home.path" . }}" 
-  user: "{{ include "chaimeleon.ceph.user" . }}" 
-  monitors: 
-      {{ include "chaimeleon.ceph.monitors" . | nindent 6 }}
-  secretRef:
-      name: "ceph-auth"
-{{- end }}
-
-{{- define "chaimeleon.persistent_shared_folder.path" -}}
-{{- $configmap := (lookup "v1" "ConfigMap" .Release.Namespace .Values.configmaps.chaimeleon) }}
-{{- index $configmap "data" "persistent_shared_folder.path" -}}
-{{- end }}
-
 {{- define "chaimeleon.persistent_shared_folder.mount_point" -}}
 /home/chaimeleon/persistent-shared-folder
 {{- end }}
 
-{{/* Generate the contents of a volume object which provides access to the persistent shared folder. */}}
-{{- define "chaimeleon.persistent_shared_folder.volume" -}}
-cephfs:
-  path: "{{ include "chaimeleon.persistent_shared_folder.path" . }}"
-  user: "{{ include "chaimeleon.ceph.user" . }}"
-  monitors: 
-      {{ include "chaimeleon.ceph.monitors" . | nindent 6 }}
-  secretRef:
-      name: "ceph-auth"
-{{- end }}
-
-{{- define "chaimeleon.datasets.path" -}}
-{{- $configmap := (lookup "v1" "ConfigMap" .Release.Namespace .Values.configmaps.chaimeleon) }}
-{{- index $configmap "data" "datasets.path" -}}
-{{- end }}
-
 {{- define "chaimeleon.datasets.mount_point" -}}
 /home/chaimeleon/datasets
-{{- end }}
-
-{{/* Generate the contents of a volume object which provides access to a dataset files.
-     Input required: a list with 2 params ( top-level scope, dataset Id ) */}}
-{{- define "chaimeleon.dataset.volume" -}}
-{{- $top := index . 0 -}}
-{{- $datasetID := index . 1 -}}
-cephfs:
-  path: "{{ include "chaimeleon.datasets.path" $top }}/{{ $datasetID }}" 
-  user: "{{ include "chaimeleon.ceph.user" $top }}" 
-  monitors: 
-      {{ include "chaimeleon.ceph.monitors" $top | nindent 6 }}
-  secretRef:
-      name: "ceph-auth"
-  readOnly: true
 {{- end }}
 
 
@@ -166,34 +95,4 @@ harbor.chaimeleon-eu.i3m.upv.es/dockerhub
 {{- define "chaimeleon.guacamole-url" -}}
 https://chaimeleon-eu.i3m.upv.es/guacamole/
 {{- end -}}
-
-{{/* Obtain the Chaimeleon guacamole backend service host. */}}
-{{- define "chaimeleon.guacd-host" -}}
-guacamole-guacd.guacamole.svc.cluster.local
-{{- end -}}
-
-{{/* Generate the value for the guacamole user. */}}
-{{- define "chaimeleon.guacamole-user-value" -}}
-valueFrom:
-  secretKeyRef:
-    name: "guacamole-api-auth"
-    key: user
-{{- end -}}
-
-{{/* Generate the value for the guacamole password. */}}
-{{- define "chaimeleon.guacamole-password-value" -}}
-valueFrom:
-  secretKeyRef:
-    name: "guacamole-api-auth"
-    key: password
-{{- end -}}
-
-
-{{/* Generate ingress annotations to secure a web application (only authenticated user will be able to access). 
-{{- define "chaimeleon.ingress-auth-annotations" -}}
-nginx.ingress.kubernetes.io/auth-url: "https://chaimeleon-eu.i3m.upv.es/oauth2p/auth"
-nginx.ingress.kubernetes.io/auth-signin: "https://chaimeleon-eu.i3m.upv.es/oauth2p/start"
-nginx.ingress.kubernetes.io/proxy-buffer-size: '16k'
-{{- end }}
-*/}}
 

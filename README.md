@@ -13,14 +13,14 @@ It makes you write less lines in the templates of your charts and also you don't
 
 To use it just copy the file into the "templates" directory of your chart:  
 `cd templates && wget https://github.com/chaimeleon-eu/helm-chart-common/blob/main/_chaimeleonCommonHelpers.tpl`  
-or clone
+or clone:  
 `cd templates && git submodule clone https://github.com/chaimeleon-eu/helm-chart-common.git`  
-or add as a submodule (recommended)
+or add as a submodule (recommended):  
 `cd templates && git submodule add -b "main" "git@github.com:chaimeleon-eu/helm-chart-common.git" "ChaimeleonCommon"`  
 NOTE: if you use one of the last two methods, 
 it is recommended to add `templates/ChaimeleonCommon/.git` and `templates/ChaimeleonCommon/README.md` in your `.helmignore` file.
 
-It can be just in the "templates" directory, beside your `_helpers.tpl` (if you have one) or in a subdirectory.  
+It can be directly in the "templates" directory, beside your `_helpers.tpl` (if you have one) or in a subdirectory.  
 All the functions defined in it have the prefix `chaimeleon.`, and they can be used with `include` 
 (you will see in the next chapters of this guide).
 
@@ -32,7 +32,7 @@ Please check the
 
 Once uploaded to the CHAIMELEON images repository, you will be able to use an image with:
 ```yaml
-    image: "{{ include "chaimeleon.library-url" . }}/ubuntu_python_tensorflow_desktop_jupyter:{{ .Chart.AppVersion }}"
+    image: "{{ include "chaimeleon.library-url" . }}/ubuntu_python_tensorflow_desktop:{{ .Chart.AppVersion }}"
 ```
 Or if the container don't mount cephfs volumes you can use a non-customized image from dockerHub with:
 ```yaml
@@ -56,8 +56,7 @@ The deployment usually should have this annotations:
     
     chaimeleon.eu/createGuacamoleConnection: "true"
 ```
-
-All this annotations are optional except `toolName` and `toolVersion`.
+All this annotations are optional except `toolName` and `toolVersion`.  
 If you want to add all of them, as usually, you can just call this function:
 ```yaml
   annotations: 
@@ -66,16 +65,29 @@ If you want to add all of them, as usually, you can just call this function:
 
 If you don't want to mount datasets, don't add `chaimeleon.eu/datasetsIDs` or set the value to empty string `""`.  
 If you don't want to mount the persistent-home, don't add `chaimeleon.eu/persistentHomeMountPoint`.  
-If you don't want to mount the persistent-shared-folder, don't add `chaimeleon.eu/persistentSharedFolderMountPoint`.  
+If you don't want to mount the persistent-shared-folder, don't add `chaimeleon.eu/persistentSharedFolderMountPoint`.
+
 If the image don't include a desktop and you don't want to create a guacamole connection, don't add `chaimeleon.eu/createGuacamoleConnection`.  
+Otherwise you must include a secret in your helm chart, with the same name as the deployment and containing two entries: `container-user` and `container-password`.  
+Example:
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: "{{ include "desktop-tensorflow.fullname" . }}"
+type: Opaque
+stringData:
+  container-user: "chaimeleon"
+  container-password: "{{ include "utils.randomString" . }}"
+```
+
+More details in the [k8s operator README](https://github.com/chaimeleon-eu/k8s-chaimeleon-operator#known-annotations-in-deployments-and-jobs).
 
 This annotations will be read by the k8s operator before creating the deployment in order to do some stuff:
  - Check if the user have access to datasets selected (in case of success, the access will be granted including the gid in the ACL of dataset directories).
  - Mount datalake, datasets, persistent-home and persistent-shared-folder in the container.
- - Notify the use of dataset (with the tool name and version) to the Tracer Service.
+ - Notify the use of datasets (with the tool name and version) to the Tracer Service.
  - Create a connection in Guacamole to allow the user to connect to the remote desktop.
-
-More details in the [k8s operator README](https://github.com/chaimeleon-eu/k8s-chaimeleon-operator#known-annotations-in-deployments-and-jobs).
 
 ### How to show the values to be set by the user as a form
 

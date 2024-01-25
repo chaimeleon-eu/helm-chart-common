@@ -52,7 +52,7 @@ chaimeleon.eu/createGuacamoleConnection: "true"
 
 
 {{- define "chaimeleon.user.name" -}}
-{{- $configmap := (lookup "v1" "ConfigMap" .Release.Namespace .Values.configmaps.chaimeleon) }}
+{{- $configmap := (lookup "v1" "ConfigMap" .Release.Namespace "chaimeleon") }}
 {{- index $configmap "data" "user.name" -}}
 {{- end }}
 
@@ -61,7 +61,7 @@ chaimeleon.eu/createGuacamoleConnection: "true"
 {{- end }}
 
 {{- define "chaimeleon.group.name" -}}
-{{- $configmap := (lookup "v1" "ConfigMap" .Release.Namespace .Values.configmaps.chaimeleon) }}
+{{- $configmap := (lookup "v1" "ConfigMap" .Release.Namespace "chaimeleon") }}
 {{- index $configmap "data" "group.name" -}}
 {{- end }}
 

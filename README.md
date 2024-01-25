@@ -32,7 +32,7 @@ Please check the
 
 Once uploaded to the CHAIMELEON images repository, you will be able to use an image with:
 ```yaml
-    image: "{{ include "chaimeleon.library-url" . }}/ubuntu_python_tensorflow_desktop:{{ .Chart.AppVersion }}"
+    image: "{{ include "chaimeleon.library-url" . }}/ubuntu-python-tensorflow-desktop:{{ .Chart.AppVersion }}"
 ```
 Or if the container don't mount cephfs volumes you can use a non-customized image from dockerHub with:
 ```yaml
